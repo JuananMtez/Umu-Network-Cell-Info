@@ -77,8 +77,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
 
-        System.out.println("HOOOOOLA " + tecnologia);
-
 
         bntIniciar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -161,14 +159,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         // Si no esta pulsado entonces hay que iniciar
-        if (bntIniciar.getText().equals(getString(R.string.Iniciar))) {
+        if (bntIniciar.getText().equals(getString(R.string.Iniciar)) || bntIniciar.getText().equals(getString(R.string.Renaudar)) ) {
 
             showPosition();
             bntIniciar.setText(getString(R.string.Parar));
 
         } else  {
             client.removeLocationUpdates(callback);
-            bntIniciar.setText(getString(R.string.Iniciar));
+            bntIniciar.setText(getString(R.string.Renaudar));
         }
     }
 

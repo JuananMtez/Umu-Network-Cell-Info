@@ -12,7 +12,6 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-
     private Button button;
     private int select;
 
@@ -48,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         items[1] = getString(R.string.Wcdma);
         items[2] = getString(R.string.Gsm);
 
-        new AlertDialog.Builder(this).setTitle(getString(R.string.ChooseTec))
+        new AlertDialog.Builder(this).setTitle(getString(R.string.Tecnologia))
                 .setSingleChoiceItems(items, select, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

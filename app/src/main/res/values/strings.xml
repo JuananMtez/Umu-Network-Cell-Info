@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">My Application</string>
-    <string name="Actividad1BotonMapa">Map</string>
-    <string name="Version">Version 1.0.6</string>
+    <string name="app_name">"Umu Network Cell Info "</string>
+    <string name="Actividad1BotonMapa">OPEN MAP</string>
+    <string name="Version">Version 1.1.0</string>
     <string name="Clase3">Open Cood</string>
     <string name="NetworkInfo">Current Network Info</string>
     <string name="CellInfo">Network Cells Info</string>
@@ -11,6 +11,7 @@
     <string name="Lte">LTE</string>
     <string name="Gsm">GSM</string>
     <string name="Wcdma">WCDMA</string>
-    <string name="ChooseTec">Please, choose a tecnology</string>
+    <string name="ChooseTec">Please, Choose a Tecnology</string>
+    <string name="Renaudar">Resume</string>
 
 </resources>
