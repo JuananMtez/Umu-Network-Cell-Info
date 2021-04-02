@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
 
             Intent intent = new Intent(this, MapsActivity.class);
+            intent.putExtra("tecnologia", button.getText());
             startActivity(intent);
         }
     }

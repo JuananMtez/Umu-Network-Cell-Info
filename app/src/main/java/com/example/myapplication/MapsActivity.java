@@ -47,6 +47,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<LatLng> allPoints;
     private TelephonyManager telephonyManager;
     private Button bntIniciar;
+    private String tecnologia;
 
 
     private double distanciaCoord(LatLng latLng1, LatLng latLng2) {
@@ -67,6 +68,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         bntIniciar = findViewById(R.id.btnFuncionalidad);
+        Bundle extras = getIntent().getExtras();
+
+        if (!extras.isEmpty()) {
+            Object extra = extras.get("tecnologia");
+            if (extra instanceof String){
+                tecnologia = new String((String) extra);
+            }
+        }
+
+        System.out.println("HOOOOOLA " + tecnologia);
 
 
         bntIniciar.setOnClickListener(new View.OnClickListener() {
@@ -223,26 +234,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         List<CellInfo> cellInfoList = telephonyManager.getAllCellInfo();
+        int valorMaximo = 0;
 
         if (cellInfoList.size() > 1) {
 
-            int valorMaximo = 0;
-
             for (CellInfo info: cellInfoList) {
 
-                if (info instanceof CellInfoGsm) {
+                if (info instanceof CellInfoGsm && tecnologia.equals(getString(R.string.Gsm))) {
 
                     CellInfoGsm cellInfoGsm = (CellInfoGsm) info;
                     if (valorMaximo < cellInfoGsm.getCellSignalStrength().getLevel())
                         valorMaximo = cellInfoGsm.getCellSignalStrength().getLevel();
 
-                } else if (info instanceof CellInfoWcdma) {
+                } else if (info instanceof CellInfoWcdma && tecnologia.equals(getString(R.string.Wcdma))) {
 
                     CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) info;
                     if (valorMaximo < cellInfoWcdma.getCellSignalStrength().getLevel())
                         valorMaximo = cellInfoWcdma.getCellSignalStrength().getLevel();
 
-                } else if (info instanceof CellInfoLte) {
+                } else if (info instanceof CellInfoLte && tecnologia.equals(getString(R.string.Lte))) {
 
                     CellInfoLte cellInfoLte = (CellInfoLte) info;
                     if (valorMaximo < cellInfoLte.getCellSignalStrength().getLevel())
@@ -250,13 +260,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
             }
-
-
-            return valorMaximo;
-
         }
 
-        return 0;
+        return valorMaximo;
 
     }
 
