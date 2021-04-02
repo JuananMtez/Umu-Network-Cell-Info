@@ -28,12 +28,15 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.Dash;
 import com.google.android.gms.maps.model.Dot;
 import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -44,6 +47,8 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+
+
 
     private static final int DISTANCIA_PUNTOS = 10;
     private GoogleMap mMap;
@@ -87,42 +92,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 LatLng received = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
 
-                if ((allPoints.isEmpty()) || distanciaCoord(allPoints.get(allPoints.size() - 1), received) > DISTANCIA_PUNTOS) {
-
+                if (allPoints.size() == 0 ||distanciaCoord(allPoints.get(allPoints.size() - 1), received) > DISTANCIA_PUNTOS) {
 
                     allPoints.add(received);
+                    int color = 0;
+                    int level = getLevelSignal();
 
-                    if (allPoints.size() > 1) {
+                    switch(level) {
+                        case 0:
+                            color = Color.BLACK;
+                            break;
+                        case 1:
+                            color = Color.BLUE;
+                            break;
+                        case 2:
+                            color = Color.GREEN;
+                            break;
+                        case 3:
+                            color = Color.YELLOW;
+                            break;
+                        case 4:
+                            color = Color.RED;
+                            break;
+                    }
 
-                        Polyline dot = mMap.addPolyline(new PolylineOptions()
-                                .add(allPoints.get(allPoints.size() - 2), received)
-                                .width(50f));
-
-                        int level = getLevelSignal();
-
-                        switch(level) {
-                            case 0:
-                                dot.setColor(Color.BLACK);
-                                break;
-                            case 1:
-                                dot.setColor(Color.BLUE);
-                                break;
-                            case 2:
-                                dot.setColor(Color.GREEN);
-                                break;
-                            case 3:
-                                dot.setColor(Color.YELLOW);
-                                break;
-                            case 4:
-                                dot.setColor(Color.RED);
-                                break;
-                        }
-
-                        List<PatternItem> pattern = Arrays.asList(new Dot(), new Gap(10f));
-                        dot.setPattern(pattern);
+                    mMap.addCircle(new CircleOptions()
+                        .center(received)
+                        .strokeColor(Color.BLACK)
+                        .strokeWidth(4)
+                        .fillColor(color)
+                        .radius(4));
                     }
                 }
-            }
         };
     }
 
@@ -156,7 +157,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         client.getLastLocation().addOnSuccessListener(location -> {
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(location.getLatitude(), location.getLongitude()))
-                    .zoom(17)
+                    .zoom(20)
                     .build();
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 

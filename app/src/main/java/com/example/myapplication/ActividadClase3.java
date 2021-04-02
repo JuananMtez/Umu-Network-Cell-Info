@@ -40,7 +40,7 @@ public class ActividadClase3 extends AppCompatActivity {
 
     private void currentNetworkInfo() {
 
-        String text = " h";
+        String text = "";
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
 
             ActivityCompat.requestPermissions(this, new String[]{
