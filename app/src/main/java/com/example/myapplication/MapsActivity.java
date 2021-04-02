@@ -150,14 +150,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         // Si no esta pulsado entonces hay que iniciar
-        if (bntIniciar.getText().equals("Start") || bntIniciar.getText().equals("Comenzar")) {
+        if (bntIniciar.getText().equals(getString(R.string.Iniciar))) {
 
             showPosition();
-            bntIniciar.setText(R.string.Parar);
+            bntIniciar.setText(getString(R.string.Parar));
 
         } else  {
             client.removeLocationUpdates(callback);
-            bntIniciar.setText(R.string.Iniciar);
+            bntIniciar.setText(getString(R.string.Iniciar));
         }
     }
 

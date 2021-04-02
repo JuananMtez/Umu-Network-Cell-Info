@@ -1,11 +1,16 @@
 <resources>
     <string name="app_name">My Application</string>
     <string name="Actividad1BotonMapa">Map</string>
-    <string name="Version">Version 1.0.0</string>
+    <string name="Version">Version 1.0.6</string>
     <string name="Clase3">Open Cood</string>
     <string name="NetworkInfo">Current Network Info</string>
     <string name="CellInfo">Network Cells Info</string>
     <string name="Iniciar">Start</string>
     <string name="Parar">Pause</string>
+    <string name="Tecnologia">Choose a Network Tecnology</string>
+    <string name="Lte">LTE</string>
+    <string name="Gsm">GSM</string>
+    <string name="Wcdma">WCDMA</string>
+    <string name="ChooseTec">Please, choose a tecnology</string>
 
 </resources>

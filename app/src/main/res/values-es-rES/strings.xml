@@ -2,10 +2,15 @@
 <resources>
     <string name="app_name">Mi aplicación</string>
     <string name="Actividad1BotonMapa">Mapa</string>
-    <string name="Version">Versión 1.0.0</string>
+    <string name="Version">Versión 1.0.6</string>
     <string name="Clase3">Abrir Coordenadas</string>
     <string name="NetworkInfo">Información de la red actual</string>
     <string name="CellInfo">Info redes moviles</string>
     <string name="Iniciar">Comenzar</string>
     <string name="Parar">Pausar</string>
+    <string name="Tecnologia">Selecciona una Tecnología de Red</string>
+    <string name="Lte">LTE</string>
+    <string name="Gsm">GSM</string>
+    <string name="Wcdma">WCDMA</string>
+    <string name="ChooseTec">Por favor, seleccione una tecnología</string>
 </resources>
