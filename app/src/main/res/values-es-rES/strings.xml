@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Mi aplicación</string>
     <string name="Actividad1BotonMapa">Mapa</string>
-    <string name="Version">Version 1.0.0</string>
+    <string name="Version">Versión 1.0.0</string>
     <string name="Clase3">Abrir Coordenadas</string>
     <string name="NetworkInfo">Información de la red actual</string>
     <string name="CellInfo">Info redes moviles</string>
+    <string name="Iniciar">Comenzar</string>
+    <string name="Parar">Pausar</string>
 </resources>

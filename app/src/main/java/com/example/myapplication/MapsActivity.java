@@ -15,6 +15,9 @@ import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoWcdma;
 import android.telephony.TelephonyManager;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -49,13 +52,13 @@ import static java.util.Arrays.asList;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
 
-
     private static final int DISTANCIA_PUNTOS = 10;
     private GoogleMap mMap;
     private FusedLocationProviderClient client;
     private LocationCallback callback;
     private List<LatLng> allPoints;
     private TelephonyManager telephonyManager;
+    private Button bntIniciar;
 
 
     private double distanciaCoord(LatLng latLng1, LatLng latLng2) {
@@ -75,11 +78,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        bntIniciar = findViewById(R.id.btnFuncionalidad);
+
+
+        bntIniciar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                changeTextButton();
+            }
+        });
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
         client = LocationServices.getFusedLocationProviderClient(this);
 
         allPoints = new ArrayList<LatLng>();
@@ -92,13 +109,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 LatLng received = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
 
-                if (allPoints.size() == 0 ||distanciaCoord(allPoints.get(allPoints.size() - 1), received) > DISTANCIA_PUNTOS) {
+                if (allPoints.size() == 0 || distanciaCoord(allPoints.get(allPoints.size() - 1), received) > DISTANCIA_PUNTOS) {
 
                     allPoints.add(received);
                     int color = 0;
                     int level = getLevelSignal();
 
-                    switch(level) {
+                    switch (level) {
                         case 0:
                             color = Color.BLACK;
                             break;
@@ -117,13 +134,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
 
                     mMap.addCircle(new CircleOptions()
-                        .center(received)
-                        .strokeColor(Color.BLACK)
-                        .strokeWidth(4)
-                        .fillColor(color)
-                        .radius(4));
-                    }
+                            .center(received)
+                            .strokeColor(Color.BLACK)
+                            .strokeWidth(4)
+                            .fillColor(color)
+                            .radius(4));
                 }
+            }
         };
     }
 
@@ -136,7 +153,51 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json)
         );
 
-        showPosition();
+        showInitialPosition();
+
+    }
+
+    public void changeTextButton() {
+
+
+
+        // Si no esta pulsado entonces hay que iniciar
+        if (bntIniciar.getText().equals("Start") || bntIniciar.getText().equals("Comenzar")) {
+
+            showPosition();
+            bntIniciar.setText(R.string.Parar);
+
+        } else  {
+            client.removeLocationUpdates(callback);
+            bntIniciar.setText(R.string.Iniciar);
+        }
+    }
+
+
+    private void showInitialPosition() {
+
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            }, 2);
+
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+
+
+        client.getLastLocation().addOnSuccessListener(location -> {
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(new LatLng(location.getLatitude(), location.getLongitude()))
+                    .zoom(20)
+                    .build();
+            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        });
     }
 
     private void showPosition() {
@@ -151,17 +212,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
 
-        mMap.setMyLocationEnabled(true);
 
-
-        client.getLastLocation().addOnSuccessListener(location -> {
-            CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(new LatLng(location.getLatitude(), location.getLongitude()))
-                    .zoom(20)
-                    .build();
-            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
-        });
 
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setInterval(1000);
@@ -238,6 +289,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             case 1:
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                     getLevelSignal();
+                } else {
+                    Toast.makeText(this, "Acepta", Toast.LENGTH_SHORT).show();
+                }
+                break;
+
+            case 2:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    showInitialPosition();
                 } else {
                     Toast.makeText(this, "Acepta", Toast.LENGTH_SHORT).show();
                 }

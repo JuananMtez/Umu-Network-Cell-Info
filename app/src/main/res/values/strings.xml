@@ -5,5 +5,7 @@
     <string name="Clase3">Open Cood</string>
     <string name="NetworkInfo">Current Network Info</string>
     <string name="CellInfo">Network Cells Info</string>
+    <string name="Iniciar">Start</string>
+    <string name="Parar">Pause</string>
 
 </resources>

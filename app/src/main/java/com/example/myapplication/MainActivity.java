@@ -20,10 +20,5 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void onClickActividadClase3(View v) {
-        Intent intent = new Intent (this, ActividadClase3.class);
-        startActivity(intent);
-    }
-
 
 }
