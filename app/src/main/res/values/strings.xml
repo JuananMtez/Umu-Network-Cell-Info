@@ -13,5 +13,6 @@
     <string name="Wcdma">WCDMA</string>
     <string name="ChooseTec">Please, Choose a Tecnology</string>
     <string name="Renaudar">Resume</string>
+    <string name="Permisos">Need permission to continue</string>
 
 </resources>

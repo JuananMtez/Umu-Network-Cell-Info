@@ -14,4 +14,5 @@
     <string name="Wcdma">WCDMA</string>
     <string name="ChooseTec">Por favor, Seleccione una Tecnología</string>
     <string name="Renaudar">Renaudar</string>
+    <string name="Permisos">Necesita permisos para continuar</string>
 </resources>

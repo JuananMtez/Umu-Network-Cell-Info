@@ -40,7 +40,18 @@ import java.util.List;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
 
-    private static final int DISTANCIA_PUNTOS = 10;
+    private static final int DISTANCIA_PUNTOS_MINIMA = 10;
+    private static final int SIGNAL_STRENGTH_NONE_OR_UNKNOWN = 0;
+    private static final int SIGNAL_STRENGTH_POOR = 1;
+    private static final int SIGNAL_STRENGTH_MODERATE = 2;
+    private static final int SIGNAL_STRENGTH_GOOD = 3;
+    private static final int SIGNAL_STRENGTH_GREAT = 4;
+    private static final int STROKE_WIDTH = 4;
+    private static final int RADIUS = 4;
+    private static final float ZOOM_INICIAL = 20;
+    private static final long FASTEST_INTERVAL = 500;
+    private static final long INTERVAL = 1000;
+
     private GoogleMap mMap;
     private FusedLocationProviderClient client;
     private LocationCallback callback;
@@ -106,36 +117,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 LatLng received = new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude());
 
-                if (allPoints.size() == 0 || distanciaCoord(allPoints.get(allPoints.size() - 1), received) > DISTANCIA_PUNTOS) {
+                if (allPoints.size() == 0 || distanciaCoord(allPoints.get(allPoints.size() - 1), received) > DISTANCIA_PUNTOS_MINIMA) {
 
                     allPoints.add(received);
                     int color = 0;
                     int level = getLevelSignal();
 
                     switch (level) {
-                        case 0:
+                        case SIGNAL_STRENGTH_NONE_OR_UNKNOWN:
                             color = Color.BLACK;
                             break;
-                        case 1:
+                        case SIGNAL_STRENGTH_POOR:
                             color = Color.BLUE;
                             break;
-                        case 2:
+                        case SIGNAL_STRENGTH_MODERATE:
                             color = Color.GREEN;
                             break;
-                        case 3:
+                        case SIGNAL_STRENGTH_GOOD:
                             color = Color.YELLOW;
                             break;
-                        case 4:
+                        case SIGNAL_STRENGTH_GREAT:
                             color = Color.RED;
                             break;
                     }
-
                     mMap.addCircle(new CircleOptions()
                             .center(received)
                             .strokeColor(Color.BLACK)
-                            .strokeWidth(4)
+                            .strokeWidth(STROKE_WIDTH)
                             .fillColor(color)
-                            .radius(4));
+                            .radius(RADIUS));
                 }
             }
         };
@@ -151,14 +161,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         );
 
         showInitialPosition();
-
     }
 
     public void changeTextButton() {
 
-
-
-        // Si no esta pulsado entonces hay que iniciar
         if (bntIniciar.getText().equals(getString(R.string.Iniciar)) || bntIniciar.getText().equals(getString(R.string.Renaudar)) ) {
 
             showPosition();
@@ -186,11 +192,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         mMap.setMyLocationEnabled(true);
 
-
         client.getLastLocation().addOnSuccessListener(location -> {
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .target(new LatLng(location.getLatitude(), location.getLongitude()))
-                    .zoom(20)
+                    .zoom(ZOOM_INICIAL)
                     .build();
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
@@ -209,11 +214,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
 
-
-
         LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setInterval(1000);
-        locationRequest.setFastestInterval(500);
+        locationRequest.setInterval(INTERVAL);
+        locationRequest.setFastestInterval(FASTEST_INTERVAL);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         client.requestLocationUpdates(locationRequest, callback, null);
 
@@ -256,46 +259,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (valorMaximo < cellInfoLte.getCellSignalStrength().getLevel())
                         valorMaximo = cellInfoLte.getCellSignalStrength().getLevel();
                 }
-
             }
         }
-
         return valorMaximo;
-
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 
         switch (requestCode) {
 
-            case 0: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            case 0:
+
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     showPosition();
                 } else {
-                    Toast.makeText(this, "Antonio", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.Permisos), Toast.LENGTH_SHORT).show();
                 }
-            }
 
             case 1:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     getLevelSignal();
                 } else {
-                    Toast.makeText(this, "Acepta", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.Permisos), Toast.LENGTH_SHORT).show();
                 }
                 break;
 
             case 2:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     showInitialPosition();
                 } else {
-                    Toast.makeText(this, "Acepta", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.Permisos), Toast.LENGTH_SHORT).show();
                 }
                 break;
         }
-
-
     }
-
 }
