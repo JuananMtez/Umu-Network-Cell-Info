@@ -48,6 +48,7 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -119,6 +120,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
 
                 changeTextButton();
+
             }
         });
 
@@ -126,6 +128,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                 onClickAddTowersToFile();
+                Snackbar.make(v, getString(R.string.Notification),
+                        Snackbar.LENGTH_SHORT)
+                        .show();
+
             }
         });
 
@@ -388,9 +394,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onClickAddTowersToFile() {
 
         String texto = "";
-
         for (JSONObject json: cellsFound) {
-
             try {
 
                 texto += "Latitud: " + json.getString("lat");
@@ -401,26 +405,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-
         }
 
         try {
             StorageHelper.saveStringToFile("towers.json", texto, this);
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "NOTIFICACION")
-                    .setSmallIcon(R.drawable.icon)
-                    .setContentTitle(getString(R.string.Notification))
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
-
-            notificationManager.notify(0, builder.build());
-
-            CharSequence name = "Notificacion";
-            NotificationChannel notificationChannel = new NotificationChannel("NOTIFICACION", name, NotificationManager.IMPORTANCE_DEFAULT);
-            NotificationManager notificationManager1 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            notificationManager1.createNotificationChannel(notificationChannel);
-
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -442,6 +430,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 } else {
                     Toast.makeText(this, getString(R.string.Permisos), Toast.LENGTH_SHORT).show();
                 }
+                break;
 
             case 1:
 
