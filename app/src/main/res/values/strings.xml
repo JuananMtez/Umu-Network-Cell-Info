@@ -12,7 +12,9 @@
     <string name="Gsm">GSM</string>
     <string name="Wcdma">WCDMA</string>
     <string name="ChooseTec">Please, Choose a Tecnology</string>
-    <string name="Renaudar">Resume</string>
+    <string name="Reanudar">Resume</string>
     <string name="Permisos">Need permission to continue</string>
+    <string name="Guardar">Save Towers</string>
+    <string name="Notification">File created successfully</string>
 
 </resources>

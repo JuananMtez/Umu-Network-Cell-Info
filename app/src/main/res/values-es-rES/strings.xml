@@ -13,6 +13,8 @@
     <string name="Gsm">GSM</string>
     <string name="Wcdma">WCDMA</string>
     <string name="ChooseTec">Por favor, Seleccione una Tecnología</string>
-    <string name="Renaudar">Renaudar</string>
+    <string name="Reanudar">Reanudar</string>
     <string name="Permisos">Necesita permisos para continuar</string>
+    <string name="Guardar">Guardar Torres</string>
+    <string name="Notification">Fichero creado correctamente</string>
 </resources>
