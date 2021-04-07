@@ -17,4 +17,5 @@
     <string name="Permisos">Necesita permisos para continuar</string>
     <string name="Guardar">Guardar Torres</string>
     <string name="Notification">Fichero creado correctamente</string>
+    <string name="AbrirFichero">Abrir</string>
 </resources>

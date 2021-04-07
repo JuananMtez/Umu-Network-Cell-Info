@@ -4,11 +4,13 @@ import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
 import android.telephony.CellIdentityWcdma;
@@ -53,13 +55,14 @@ import com.google.android.material.snackbar.Snackbar;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
-
+    private File uriFichero;
     private static final int DISTANCIA_PUNTOS_MINIMA = 10;
     private static final int SIGNAL_STRENGTH_NONE_OR_UNKNOWN = 0;
     private static final int SIGNAL_STRENGTH_POOR = 1;
@@ -130,6 +133,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 onClickAddTowersToFile();
                 Snackbar.make(v, getString(R.string.Notification),
                         Snackbar.LENGTH_SHORT)
+                        .setAction(getString(R.string.AbrirFichero), new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+
+
+                            }
+                        })
                         .show();
 
             }
@@ -146,6 +156,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         points = new ArrayList<LatLng>();
         cells = new ArrayList<>();
         cellsFound = new ArrayList<>();
+        uriFichero = this.getExternalFilesDir(null);
 
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 

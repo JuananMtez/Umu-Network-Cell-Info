@@ -16,5 +16,6 @@
     <string name="Permisos">Need permission to continue</string>
     <string name="Guardar">Save Towers</string>
     <string name="Notification">File created successfully</string>
+    <string name="AbrirFichero">Open</string>
 
 </resources>
