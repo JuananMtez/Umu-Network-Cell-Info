@@ -8,8 +8,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -21,6 +23,7 @@ import android.telephony.CellInfoWcdma;
 import android.telephony.TelephonyManager;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -28,6 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.FragmentActivity;
 
 import com.android.volley.Request;
@@ -62,7 +66,6 @@ import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
-    private File uriFichero;
     private static final int DISTANCIA_PUNTOS_MINIMA = 10;
     private static final int SIGNAL_STRENGTH_NONE_OR_UNKNOWN = 0;
     private static final int SIGNAL_STRENGTH_POOR = 1;
@@ -79,8 +82,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FusedLocationProviderClient client;
     private LocationCallback callback;
     private List<LatLng> points;
-    private List<LatLng> cells;
-    private List<JSONObject> cellsFound;
+
+
+    private List<Tower> towers;
 
 
 
@@ -88,6 +92,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Button bntIniciar;
     private Button btnSaveTowers;
     private String tecnologia;
+    private File file;
 
 
     private double distanciaCoord(LatLng latLng1, LatLng latLng2) {
@@ -133,15 +138,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 onClickAddTowersToFile();
                 Snackbar.make(v, getString(R.string.Notification),
                         Snackbar.LENGTH_SHORT)
-                        .setAction(getString(R.string.AbrirFichero), new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-
-
-                            }
-                        })
                         .show();
-
             }
         });
 
@@ -154,9 +151,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         client = LocationServices.getFusedLocationProviderClient(this);
 
         points = new ArrayList<LatLng>();
-        cells = new ArrayList<>();
-        cellsFound = new ArrayList<>();
-        uriFichero = this.getExternalFilesDir(null);
+        towers = new ArrayList<>();
+        file = this.getExternalFilesDir(null);
 
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
@@ -208,7 +204,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .strokeWidth(STROKE_WIDTH)
                 .fillColor(color)
                 .radius(RADIUS));
-
     }
 
 
@@ -295,10 +290,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if (cellInfoList.size() > 0) {
 
-            int mcc = 0;
-            int mnc = 0;
-            int cellId = 0;
-            int lac = 0;
+            Tower tower = null;
 
             for (CellInfo info: cellInfoList) {
 
@@ -307,10 +299,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     CellInfoGsm cellInfoGsm = (CellInfoGsm) info;
                     CellIdentityGsm id = cellInfoGsm.getCellIdentity();
 
-                    mcc = id.getMcc();
-                    mnc = id.getMnc();
-                    cellId = id.getCid();
-                    lac = id.getLac();
+                    tower = new Tower(id.getMcc(), id.getMnc(), id.getLac(), id.getCid(), getString(R.string.Gsm));
 
                     if (valorMaximo < cellInfoGsm.getCellSignalStrength().getLevel())
                         valorMaximo = cellInfoGsm.getCellSignalStrength().getLevel();
@@ -321,10 +310,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     CellIdentityWcdma id = cellInfoWcdma.getCellIdentity();
 
-                    mcc = id.getMcc();
-                    mnc = id.getMnc();
-                    cellId = id.getCid();
-                    lac = id.getLac();
+                    tower = new Tower(id.getMcc(), id.getMnc(), id.getLac(), id.getCid(), getString(R.string.Wcdma));
+
 
                     if (valorMaximo < cellInfoWcdma.getCellSignalStrength().getLevel())
                         valorMaximo = cellInfoWcdma.getCellSignalStrength().getLevel();
@@ -334,30 +321,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     CellInfoLte cellInfoLte = (CellInfoLte) info;
 
                     CellIdentityLte id = cellInfoLte.getCellIdentity();
+                    tower = new Tower(id.getMcc(), id.getMnc(), id.getTac(), id.getCi(), getString(R.string.Lte));
 
-                    mcc = id.getMcc();
-                    mnc = id.getMnc();
-                    cellId = id.getCi();
-                    lac = id.getTac();
 
                     if (valorMaximo < cellInfoLte.getCellSignalStrength().getLevel())
                         valorMaximo = cellInfoLte.getCellSignalStrength().getLevel();
                 }
 
-                if ( (mcc != 0 && mcc != 2147483647) || (mnc != 0  && mnc != 2147483647) || (cellId != 0 && cellId != 2147483647) || (lac != 0 && lac != 2147483647) )
-                    getTowers(mcc, mnc, cellId, lac);
+                if ( (tower.getMcc() != 0 && tower.getMcc() != 2147483647) || (tower.getMnc() != 0  && tower.getMnc() != 2147483647)
+                        || (tower.getCellId() != 0 && tower.getCellId() != 2147483647) || (tower.getLac() != 0 && tower.getLac() != 2147483647) )
+                    getTower(tower);
+
+
             }
         }
-
         return valorMaximo;
     }
 
-    private void getTowers(int mcc, int mnc, int cellId, int lac) {
+    private void getTower(Tower tower) {
+
+        for (Tower t : towers) {
+            if (t.getMcc() == tower.getMcc() && t.getMnc() == tower.getMnc()
+                    && t.getLac() == tower.getLac() && t.getCellId() == tower.getCellId())
+                return;
+        }
 
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        String url = "https://api.mylnikov.org/geolocation/cell?v=1.1&data=open" + "&mcc=" + mcc + "&mnc=" + mnc + "&lac=" + lac + "&cellid=" + cellId;
-        System.out.println("La url es = " + url);
+        String url = "https://api.mylnikov.org/geolocation/cell?v=1.1&data=open" + "&mcc=" + tower.getMcc() + "&mnc=" + tower.getMnc()
+                + "&lac=" + tower.getLac() + "&cellid=" + tower.getCellId();
 
         // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
@@ -371,19 +363,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (json.getString("result").equals("200")) {
 
                         JSONObject data = json.getJSONObject("data");
-                        cellsFound.add(data);
 
-                        LatLng latLng = new LatLng(Double.valueOf(data.getString("lat")), Double.valueOf(data.getString("lon")));
 
-                        for (LatLng cell : cells) {
-                            if (cell.longitude == latLng.longitude && cell.latitude == latLng.latitude)
-                                return;
-                        }
+                        tower.setLatLng(new LatLng(Double.valueOf(data.getString("lat")), Double.valueOf(data.getString("lon"))));
+                        tower.setRange(data.getString("range"));
 
-                        cells.add(latLng);
+                        towers.add(tower);
 
                         mMap.addMarker(new MarkerOptions()
-                                .position(latLng));
+                                .position(tower.getLatLng()));
                     }
 
                 } catch (JSONException e) {
@@ -405,17 +393,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onClickAddTowersToFile() {
 
         String texto = "";
-        for (JSONObject json: cellsFound) {
-            try {
-
-                texto += "Latitud: " + json.getString("lat");
-                texto += ", Longitud: " + json.getString("lon");
-                texto += ", Rango: " + json.getString("range") + "\n";
 
 
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+        for (Tower tower: towers) {
+
+            texto +=  tower.getTecnologia() + " -- Cell_Id: " + tower.getCellId() + " {\n\n";
+
+            texto += "\tMcc: " + tower.getMcc();
+
+            texto += "\n\tMnc: " + tower.getMnc();
+
+            texto += "\n\tLac: " + tower.getLac();
+
+            texto += "\n\tLatitud: " + tower.getLatLng().latitude;
+
+            texto += "\n\tLongitud: " + tower.getLatLng().longitude;
+
+            texto += "\n\tRango: " + tower.getRange() + "\n}\n\n";
+
+
         }
 
         try {
@@ -427,6 +423,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     }
+
+
 
     //Preguntar al profesor si se puede hacer de otra forma para no repetir codigo
     @Override
