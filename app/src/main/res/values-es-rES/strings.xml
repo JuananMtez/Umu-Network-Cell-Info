@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">"Umu Network Cell Info "</string>
     <string name="Actividad1BotonMapa">ABRIR MAPA</string>
-    <string name="Version">Versión 1.1.0</string>
+    <string name="Version">Versión 1.1.23</string>
     <string name="Clase3">Abrir Coordenadas</string>
     <string name="NetworkInfo">Información de la red actual</string>
     <string name="CellInfo">Info redes moviles</string>

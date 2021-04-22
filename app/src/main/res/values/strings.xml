@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">"Umu Network Cell Info "</string>
     <string name="Actividad1BotonMapa">OPEN MAP</string>
-    <string name="Version">Version 1.1.0</string>
+    <string name="Version">Version 1.1.23</string>
     <string name="Clase3">Open Cood</string>
     <string name="NetworkInfo">Current Network Info</string>
     <string name="CellInfo">Network Cells Info</string>

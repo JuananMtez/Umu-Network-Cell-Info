@@ -1,18 +1,13 @@
 package com.example.myapplication;
 
 import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.DocumentsContract;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
 import android.telephony.CellIdentityWcdma;
@@ -23,15 +18,11 @@ import android.telephony.CellInfoWcdma;
 import android.telephony.TelephonyManager;
 import android.view.View;
 import android.view.WindowManager;
-import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.FragmentActivity;
 
 import com.android.volley.Request;
@@ -66,33 +57,32 @@ import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
-    private static final int DISTANCIA_PUNTOS_MINIMA = 10;
+    private static final int DISTANCIA_PUNTOS_MINIMA = 25;
     private static final int SIGNAL_STRENGTH_NONE_OR_UNKNOWN = 0;
     private static final int SIGNAL_STRENGTH_POOR = 1;
     private static final int SIGNAL_STRENGTH_MODERATE = 2;
     private static final int SIGNAL_STRENGTH_GOOD = 3;
     private static final int SIGNAL_STRENGTH_GREAT = 4;
-    private static final int STROKE_WIDTH = 4;
-    private static final int RADIUS = 4;
-    private static final float ZOOM_INICIAL = 20;
+    private static final int STROKE_WIDTH = 6;
+    private static final int RADIUS = 10;
+    private static final float ZOOM_INICIAL = 15.5f;
     private static final long FASTEST_INTERVAL = 500;
     private static final long INTERVAL = 1000;
 
     private GoogleMap mMap;
     private FusedLocationProviderClient client;
     private LocationCallback callback;
+
+    private LocationCallback positionInitialCallback;
+
     private List<LatLng> points;
-
-
     private List<Tower> towers;
-
-
 
     private TelephonyManager telephonyManager;
     private Button bntIniciar;
     private Button btnSaveTowers;
     private String tecnologia;
-    private File file;
+
 
 
     private double distanciaCoord(LatLng latLng1, LatLng latLng2) {
@@ -114,6 +104,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_maps);
         bntIniciar = findViewById(R.id.btnFuncionalidad);
         btnSaveTowers = findViewById(R.id.btnSaveTowers);
+
         Bundle extras = getIntent().getExtras();
 
         if (!extras.isEmpty()) {
@@ -126,9 +117,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         bntIniciar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 changeTextButton();
-
             }
         });
 
@@ -152,16 +141,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         points = new ArrayList<LatLng>();
         towers = new ArrayList<>();
-        file = this.getExternalFilesDir(null);
 
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
         callback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                codeCallback(locationResult);
+
+                if (locationResult != null)
+                    codeCallback(locationResult);
             }
         };
+
+        positionInitialCallback = new LocationCallback() {
+           @Override
+           public void onLocationResult(@NonNull LocationResult locationResult) {
+
+               if (locationResult != null) {
+                   CameraPosition cameraPosition = new CameraPosition.Builder()
+                           .target(new LatLng(locationResult.getLastLocation().getLatitude(), locationResult.getLastLocation().getLongitude()))
+                           .zoom(ZOOM_INICIAL)
+                           .build();
+                   mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+                   client.removeLocationUpdates(positionInitialCallback);
+
+               }
+           }
+       };
     }
 
     private void codeCallback(LocationResult locationResult) {
@@ -175,7 +182,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void getCircle() {
-
 
         int color = 0;
         int level = getLevelSignalAndCell();
@@ -205,7 +211,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .fillColor(color)
                 .radius(RADIUS));
     }
-
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -246,12 +251,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         mMap.setMyLocationEnabled(true);
 
+
         client.getLastLocation().addOnSuccessListener(location -> {
-            CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(new LatLng(location.getLatitude(), location.getLongitude()))
-                    .zoom(ZOOM_INICIAL)
-                    .build();
-            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+            LocationRequest locationRequest = LocationRequest.create();
+            locationRequest.setInterval(INTERVAL);
+            locationRequest.setFastestInterval(FASTEST_INTERVAL);
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            client.requestLocationUpdates(locationRequest, positionInitialCallback, null);
 
         });
     }
@@ -328,8 +335,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         valorMaximo = cellInfoLte.getCellSignalStrength().getLevel();
                 }
 
-                if ( (tower.getMcc() != 0 && tower.getMcc() != 2147483647) || (tower.getMnc() != 0  && tower.getMnc() != 2147483647)
-                        || (tower.getCellId() != 0 && tower.getCellId() != 2147483647) || (tower.getLac() != 0 && tower.getLac() != 2147483647) )
+                if ( (tower != null) && ((tower.getMcc() != 0 && tower.getMcc() != 2147483647) || (tower.getMnc() != 0  && tower.getMnc() != 2147483647)
+                        || (tower.getCellId() != 0 && tower.getCellId() != 2147483647) || (tower.getLac() != 0 && tower.getLac() != 2147483647) ) )
                     getTower(tower);
 
 
