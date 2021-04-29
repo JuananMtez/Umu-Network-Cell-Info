@@ -7,15 +7,15 @@
     <string name="CellInfo">Network Cells Info</string>
     <string name="Iniciar">Start</string>
     <string name="Parar">Pause</string>
-    <string name="Tecnologia">Choose a Network Tecnology</string>
+    <string name="Tecnologia">Choose a network tecnology</string>
     <string name="Lte">LTE</string>
     <string name="Gsm">GSM</string>
     <string name="Wcdma">WCDMA</string>
-    <string name="ChooseTec">Please, Choose a Tecnology</string>
+    <string name="ChooseTec">Please, choose a tecnology</string>
     <string name="Reanudar">Resume</string>
     <string name="Permisos">Need permission to continue</string>
     <string name="Guardar">Save Towers</string>
-    <string name="Notification">File created successfully</string>
+    <string name="Notification">Towers saved successfully</string>
     <string name="AbrirFichero">Open</string>
 
 </resources>

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -19,6 +20,7 @@ import android.telephony.TelephonyManager;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -57,7 +59,7 @@ import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
-    private static final int DISTANCIA_PUNTOS_MINIMA = 25;
+    private static final int DISTANCIA_PUNTOS_MINIMA = 40;
     private static final int SIGNAL_STRENGTH_NONE_OR_UNKNOWN = 0;
     private static final int SIGNAL_STRENGTH_POOR = 1;
     private static final int SIGNAL_STRENGTH_MODERATE = 2;
@@ -81,7 +83,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private TelephonyManager telephonyManager;
     private Button bntIniciar;
     private Button btnSaveTowers;
+
+    private TextView textoTecnologia;
+
     private String tecnologia;
+    private boolean corriendo;
+    private String fileName;
+    private int numCamino;
 
 
 
@@ -104,15 +112,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_maps);
         bntIniciar = findViewById(R.id.btnFuncionalidad);
         btnSaveTowers = findViewById(R.id.btnSaveTowers);
+        textoTecnologia = findViewById(R.id.textoTecnologia);
+
+
+
 
         Bundle extras = getIntent().getExtras();
 
         if (!extras.isEmpty()) {
             Object extra = extras.get("tecnologia");
             if (extra instanceof String) {
+
                 tecnologia = new String((String) extra);
+                textoTecnologia.setText(tecnologia);
             }
         }
+
+
 
         bntIniciar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,6 +157,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         points = new ArrayList<LatLng>();
         towers = new ArrayList<>();
+        corriendo = false;
+
+        fileName = "datos";
+        if (tecnologia.equals(getString(R.string.Gsm)))
+            fileName += getString(R.string.Gsm);
+        else if (tecnologia.equals(getString(R.string.Wcdma)))
+            fileName += getString(R.string.Wcdma);
+        else if (tecnologia.equals(getString(R.string.Lte)))
+            fileName += getString(R.string.Lte);
+
+        fileName += ".txt";
+
+        try {
+            StorageHelper.saveStringToFile(fileName, "Inicio del recorrido\n\n", this, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        numCamino = 1;
+
+
+
+
 
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
@@ -169,6 +208,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                }
            }
        };
+    }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (bntIniciar.getText().equals(getString(R.string.Parar)))
+            client.removeLocationUpdates(callback);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        
+        if (corriendo && bntIniciar.getText().equals(getString(R.string.Parar)))
+            showPosition();
+
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        try {
+            StorageHelper.saveStringToFile(fileName, "Fin del recorrido\n\n", this, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void codeCallback(LocationResult locationResult) {
@@ -228,6 +295,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         if (bntIniciar.getText().equals(getString(R.string.Iniciar)) || bntIniciar.getText().equals(getString(R.string.Reanudar)) ) {
 
+
+            try {
+                StorageHelper.saveStringToFile(fileName, "Camino " + numCamino + ":\n\n", this, true);
+                numCamino++;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             showPosition();
             bntIniciar.setText(getString(R.string.Parar));
 
@@ -260,7 +335,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
             client.requestLocationUpdates(locationRequest, positionInitialCallback, null);
 
+
         });
+
+        corriendo = true;
     }
 
     private void showPosition() {
@@ -274,6 +352,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             return;
         }
+
+
+
 
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setInterval(INTERVAL);
@@ -293,23 +374,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         List<CellInfo> cellInfoList = telephonyManager.getAllCellInfo();
-        int valorMaximo = 0;
 
-        if (cellInfoList.size() > 0) {
 
-            Tower tower = null;
+        int level = 0;             // Signal level as an int from 0..4
 
-            for (CellInfo info: cellInfoList) {
+        int asuLevel = 0;          /* Signal level as an asu value, asu is calculated based on 3GPP RSRP
+                                   for GSM, between 0..31, 99 is unknown
+                                   for WCDMA, between 0..31, 99 is unknown
+                                   for LTE, between 0..97, 99 is unknown
+                                   for CDMA, between 0..97, 99 is unknown */
 
+        int dbm = 0;                // Signal level as dbm
+
+
+
+        for (CellInfo info: cellInfoList) {
+
+            if (info.isRegistered()) {
+
+                Tower tower = null;
                 if (info instanceof CellInfoGsm && tecnologia.equals(getString(R.string.Gsm))) {
 
                     CellInfoGsm cellInfoGsm = (CellInfoGsm) info;
                     CellIdentityGsm id = cellInfoGsm.getCellIdentity();
 
+
                     tower = new Tower(id.getMcc(), id.getMnc(), id.getLac(), id.getCid(), getString(R.string.Gsm));
 
-                    if (valorMaximo < cellInfoGsm.getCellSignalStrength().getLevel())
-                        valorMaximo = cellInfoGsm.getCellSignalStrength().getLevel();
+                    if (level < cellInfoGsm.getCellSignalStrength().getLevel()) {
+
+                        level = cellInfoGsm.getCellSignalStrength().getLevel();
+                        dbm = cellInfoGsm.getCellSignalStrength().getDbm();
+                        asuLevel = cellInfoGsm.getCellSignalStrength().getAsuLevel();
+                    }
 
                 } else if (info instanceof CellInfoWcdma && tecnologia.equals(getString(R.string.Wcdma))) {
 
@@ -317,32 +414,59 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     CellIdentityWcdma id = cellInfoWcdma.getCellIdentity();
 
+
                     tower = new Tower(id.getMcc(), id.getMnc(), id.getLac(), id.getCid(), getString(R.string.Wcdma));
 
 
-                    if (valorMaximo < cellInfoWcdma.getCellSignalStrength().getLevel())
-                        valorMaximo = cellInfoWcdma.getCellSignalStrength().getLevel();
+                    if (level < cellInfoWcdma.getCellSignalStrength().getLevel()) {
+
+                        level = cellInfoWcdma.getCellSignalStrength().getLevel();
+                        dbm = cellInfoWcdma.getCellSignalStrength().getDbm();
+                        asuLevel = cellInfoWcdma.getCellSignalStrength().getAsuLevel();
+                    }
 
                 } else if (info instanceof CellInfoLte && tecnologia.equals(getString(R.string.Lte))) {
 
                     CellInfoLte cellInfoLte = (CellInfoLte) info;
 
                     CellIdentityLte id = cellInfoLte.getCellIdentity();
+
+
                     tower = new Tower(id.getMcc(), id.getMnc(), id.getTac(), id.getCi(), getString(R.string.Lte));
 
 
-                    if (valorMaximo < cellInfoLte.getCellSignalStrength().getLevel())
-                        valorMaximo = cellInfoLte.getCellSignalStrength().getLevel();
+                    if (level < cellInfoLte.getCellSignalStrength().getLevel()) {
+
+                        level = cellInfoLte.getCellSignalStrength().getLevel();
+                        dbm = cellInfoLte.getCellSignalStrength().getDbm();
+                        asuLevel = cellInfoLte.getCellSignalStrength().getAsuLevel();
+
+                    }
                 }
 
-                if ( (tower != null) && ((tower.getMcc() != 0 && tower.getMcc() != 2147483647) || (tower.getMnc() != 0  && tower.getMnc() != 2147483647)
-                        || (tower.getCellId() != 0 && tower.getCellId() != 2147483647) || (tower.getLac() != 0 && tower.getLac() != 2147483647) ) )
+
+                if (tower != null)
                     getTower(tower);
-
-
             }
+
+
         }
-        return valorMaximo;
+
+        String texto = "- Lat: " + points.get(points.size() - 1).latitude + ", Lon: " + points.get(points.size() - 1).longitude + " {\n";
+
+        texto += "\t Level: " + level + "\n";
+        texto += "\t asuLevel: " + asuLevel + "\n";
+        texto += "\t Dbm: " + dbm + "\n}\n\n";
+
+
+        try {
+            StorageHelper.saveStringToFile(fileName, texto, this, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return level;
     }
 
     private void getTower(Tower tower) {
@@ -422,7 +546,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         try {
-            StorageHelper.saveStringToFile("towers.json", texto, this);
+            StorageHelper.saveStringToFile("towers.json", texto, this, false);
 
         } catch (IOException e) {
             e.printStackTrace();
