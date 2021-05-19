@@ -17,5 +17,9 @@
     <string name="Guardar">Save Towers</string>
     <string name="Notification">Towers saved successfully</string>
     <string name="AbrirFichero">Open</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="Terminado">finished</string>
+    <string name="Comenzando">started</string>
+    <string name="Camino">Path</string>
 
 </resources>

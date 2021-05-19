@@ -6,6 +6,9 @@ android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
 
+    lintOptions{
+        checkReleaseBuilds false
+    }
     defaultConfig {
         applicationId "com.example.myapplication"
         minSdkVersion 26

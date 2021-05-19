@@ -3,11 +3,9 @@ package com.example.myapplication;
 import android.Manifest;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
-import android.os.Build;
 import android.os.Bundle;
 import android.telephony.CellIdentityGsm;
 import android.telephony.CellIdentityLte;
@@ -23,14 +21,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
+
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -52,14 +48,13 @@ import com.google.android.material.snackbar.Snackbar;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
-    private static final int DISTANCIA_PUNTOS_MINIMA = 40;
+    private static final int DISTANCIA_PUNTOS_MINIMA = 30;
     private static final int SIGNAL_STRENGTH_NONE_OR_UNKNOWN = 0;
     private static final int SIGNAL_STRENGTH_POOR = 1;
     private static final int SIGNAL_STRENGTH_MODERATE = 2;
@@ -81,13 +76,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<Tower> towers;
 
     private TelephonyManager telephonyManager;
-    private Button bntIniciar;
+    private Button btnIniciar;
     private Button btnSaveTowers;
-
-    private TextView textoTecnologia;
 
     private String tecnologia;
     private boolean corriendo;
+    private boolean zoomInicial;
     private String fileName;
     private int numCamino;
 
@@ -110,9 +104,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        bntIniciar = findViewById(R.id.btnFuncionalidad);
-        btnSaveTowers = findViewById(R.id.btnSaveTowers);
-        textoTecnologia = findViewById(R.id.textoTecnologia);
+        btnIniciar = findViewById(R.id.btnFuncionalidad);
+        btnIniciar.setEnabled(false);
+                btnSaveTowers = findViewById(R.id.btnSaveTowers);
+        btnSaveTowers.setEnabled(false);
+        TextView textoTecnologia = findViewById(R.id.textoTecnologia);
 
 
 
@@ -120,31 +116,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Bundle extras = getIntent().getExtras();
 
         if (!extras.isEmpty()) {
-            Object extra = extras.get("tecnologia");
-            if (extra instanceof String) {
 
-                tecnologia = new String((String) extra);
+            if (extras.get("tecnologia") instanceof String) {
+
+                tecnologia = (String) extras.get("tecnologia");
                 textoTecnologia.setText(tecnologia);
             }
         }
 
 
 
-        bntIniciar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                changeTextButton();
-            }
-        });
+        btnIniciar.setOnClickListener(this::changeTextButton);
 
-        btnSaveTowers.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickAddTowersToFile();
-                Snackbar.make(v, getString(R.string.Notification),
-                        Snackbar.LENGTH_SHORT)
-                        .show();
-            }
+        btnSaveTowers.setOnClickListener(v -> {
+            onClickAddTowersToFile();
+            Snackbar.make(v, getString(R.string.Notification),
+                    Snackbar.LENGTH_SHORT)
+                    .show();
         });
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -155,7 +143,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         client = LocationServices.getFusedLocationProviderClient(this);
 
-        points = new ArrayList<LatLng>();
+        points = new ArrayList<>();
         towers = new ArrayList<>();
         corriendo = false;
 
@@ -178,14 +166,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         numCamino = 1;
 
 
-
+        zoomInicial = false;
 
 
         telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
         callback = new LocationCallback() {
             @Override
-            public void onLocationResult(@NonNull LocationResult locationResult) {
+            public void onLocationResult(LocationResult locationResult) {
 
                 if (locationResult != null)
                     codeCallback(locationResult);
@@ -194,7 +182,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         positionInitialCallback = new LocationCallback() {
            @Override
-           public void onLocationResult(@NonNull LocationResult locationResult) {
+           public void onLocationResult(LocationResult locationResult) {
 
                if (locationResult != null) {
                    CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -204,7 +192,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
                    client.removeLocationUpdates(positionInitialCallback);
-
                }
            }
        };
@@ -215,7 +202,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onPause() {
         super.onPause();
 
-        if (bntIniciar.getText().equals(getString(R.string.Parar)))
+        if (btnIniciar.getText().equals(getString(R.string.Parar)))
             client.removeLocationUpdates(callback);
     }
 
@@ -223,7 +210,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onResume() {
         super.onResume();
         
-        if (corriendo && bntIniciar.getText().equals(getString(R.string.Parar)))
+        if (corriendo && btnIniciar.getText().equals(getString(R.string.Parar)))
             showPosition();
 
     }
@@ -284,31 +271,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap = googleMap;
 
-        mMap.setMapStyle(
-                MapStyleOptions.loadRawResourceStyle(this, R.raw.style_json)
-        );
+
+
+        mMap.setOnCameraMoveListener(() -> {
+            if (!zoomInicial && mMap.getCameraPosition().zoom == ZOOM_INICIAL) {
+                btnIniciar.setEnabled(true);
+                btnSaveTowers.setEnabled(true);
+                zoomInicial = true;
+            }
+        });
+
 
         showInitialPosition();
     }
 
-    public void changeTextButton() {
+    public void changeTextButton(View v) {
 
-        if (bntIniciar.getText().equals(getString(R.string.Iniciar)) || bntIniciar.getText().equals(getString(R.string.Reanudar)) ) {
+        if (btnIniciar.getText().equals(getString(R.string.Iniciar)) || btnIniciar.getText().equals(getString(R.string.Reanudar)) ) {
 
 
             try {
                 StorageHelper.saveStringToFile(fileName, "Camino " + numCamino + ":\n\n", this, true);
-                numCamino++;
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
             showPosition();
-            bntIniciar.setText(getString(R.string.Parar));
+            btnIniciar.setText(getString(R.string.Parar));
+
+            Snackbar.make(v, getString(R.string.Camino) + " " + numCamino + " " + getString(R.string.Comenzando),
+                    Snackbar.LENGTH_SHORT)
+                    .show();
+
+            numCamino++;
+
 
         } else  {
             client.removeLocationUpdates(callback);
-            bntIniciar.setText(getString(R.string.Reanudar));
+            btnIniciar.setText(getString(R.string.Reanudar));
+            Snackbar.make(v, getString(R.string.Camino) + " " + (numCamino - 1) + " " + getString(R.string.Terminado),
+                    Snackbar.LENGTH_SHORT)
+                    .show();
         }
     }
 
@@ -339,6 +342,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
         corriendo = true;
+
     }
 
     private void showPosition() {
@@ -428,28 +432,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 } else if (info instanceof CellInfoLte && tecnologia.equals(getString(R.string.Lte))) {
 
                     CellInfoLte cellInfoLte = (CellInfoLte) info;
-
                     CellIdentityLte id = cellInfoLte.getCellIdentity();
 
-
                     tower = new Tower(id.getMcc(), id.getMnc(), id.getTac(), id.getCi(), getString(R.string.Lte));
-
 
                     if (level < cellInfoLte.getCellSignalStrength().getLevel()) {
 
                         level = cellInfoLte.getCellSignalStrength().getLevel();
                         dbm = cellInfoLte.getCellSignalStrength().getDbm();
                         asuLevel = cellInfoLte.getCellSignalStrength().getAsuLevel();
-
                     }
                 }
-
 
                 if (tower != null)
                     getTower(tower);
             }
-
-
         }
 
         String texto = "- Lat: " + points.get(points.size() - 1).latitude + ", Lon: " + points.get(points.size() - 1).longitude + " {\n";
@@ -482,40 +479,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String url = "https://api.mylnikov.org/geolocation/cell?v=1.1&data=open" + "&mcc=" + tower.getMcc() + "&mnc=" + tower.getMnc()
                 + "&lac=" + tower.getLac() + "&cellid=" + tower.getCellId();
 
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, response -> {
+            try {
+                JSONObject json = new JSONObject(response);
 
-            @Override
-            public void onResponse(String response) {
+                if (json.getString("result").equals("200")) {
 
-                try {
-                    JSONObject json = new JSONObject(response);
+                    JSONObject data = json.getJSONObject("data");
 
-                    if (json.getString("result").equals("200")) {
+                    tower.setLatLng(new LatLng(Double.parseDouble(data.getString("lat")), Double.parseDouble(data.getString("lon"))));
+                    tower.setRange(data.getString("range"));
+                    towers.add(tower);
 
-                        JSONObject data = json.getJSONObject("data");
-
-
-                        tower.setLatLng(new LatLng(Double.valueOf(data.getString("lat")), Double.valueOf(data.getString("lon"))));
-                        tower.setRange(data.getString("range"));
-
-                        towers.add(tower);
-
-                        mMap.addMarker(new MarkerOptions()
-                                .position(tower.getLatLng()));
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    mMap.addMarker(new MarkerOptions()
+                            .position(tower.getLatLng()));
                 }
-            }
-        }, new Response.ErrorListener() {
 
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                System.out.println(error.getMessage());
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-        });
+        }, error -> System.out.println(error.getMessage()));
 
         queue.add(stringRequest);
     }
@@ -523,30 +506,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void onClickAddTowersToFile() {
 
-        String texto = "";
+        StringBuilder texto = new StringBuilder();
 
 
         for (Tower tower: towers) {
 
-            texto +=  tower.getTecnologia() + " -- Cell_Id: " + tower.getCellId() + " {\n\n";
+            texto.append(tower.getTecnologia()).append(" -- Cell_Id: ").append(tower.getCellId()).append(" {\n\n");
 
-            texto += "\tMcc: " + tower.getMcc();
+            texto.append("\tMcc: ").append(tower.getMcc());
 
-            texto += "\n\tMnc: " + tower.getMnc();
+            texto.append("\n\tMnc: ").append(tower.getMnc());
 
-            texto += "\n\tLac: " + tower.getLac();
+            texto.append("\n\tLac: ").append(tower.getLac());
 
-            texto += "\n\tLatitud: " + tower.getLatLng().latitude;
+            texto.append("\n\tLatitud: ").append(tower.getLatLng().latitude);
 
-            texto += "\n\tLongitud: " + tower.getLatLng().longitude;
+            texto.append("\n\tLongitud: ").append(tower.getLatLng().longitude);
 
-            texto += "\n\tRango: " + tower.getRange() + "\n}\n\n";
+            texto.append("\n\tRango: ").append(tower.getRange()).append("\n}\n\n");
 
 
         }
 
         try {
-            StorageHelper.saveStringToFile("towers.json", texto, this, false);
+            StorageHelper.saveStringToFile("towers.json", texto.toString(), this, false);
 
         } catch (IOException e) {
             e.printStackTrace();

@@ -18,4 +18,8 @@
     <string name="Guardar">Guardar Torres</string>
     <string name="Notification">Torres guardadas correctamente</string>
     <string name="AbrirFichero">Abrir</string>
+    <string name="title_activity_maps">Mapa</string>
+    <string name="Comenzando">comenzado</string>
+    <string name="Terminado">terminado</string>
+    <string name="Camino">Camino</string>
 </resources>

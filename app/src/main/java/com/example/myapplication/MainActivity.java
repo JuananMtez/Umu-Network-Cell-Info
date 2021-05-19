@@ -1,7 +1,6 @@
 package com.example.myapplication;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -39,7 +38,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     public void onClickDialog(View v) {
 
         final String[] items = new String[3];
@@ -49,28 +47,25 @@ public class MainActivity extends AppCompatActivity {
         items[2] = getString(R.string.Gsm);
 
         new AlertDialog.Builder(this).setTitle(getString(R.string.Tecnologia))
-                .setSingleChoiceItems(items, select, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                .setSingleChoiceItems(items, select, (dialog, which) -> {
 
-                        switch (which){
-                            case 0:
-                                button.setText(getString(R.string.Lte));
-                                select = 0;
-                                break;
-                            case 1:
-                                button.setText(getString(R.string.Wcdma));
-                                select = 1;
-                                break;
-                            case 2:
-                                button.setText(getString(R.string.Gsm));
-                                select = 2;
-                                break;
-                        }
-
-                        dialog.dismiss();
-
+                    switch (which){
+                        case 0:
+                            button.setText(getString(R.string.Lte));
+                            select = 0;
+                            break;
+                        case 1:
+                            button.setText(getString(R.string.Wcdma));
+                            select = 1;
+                            break;
+                        case 2:
+                            button.setText(getString(R.string.Gsm));
+                            select = 2;
+                            break;
                     }
+
+                    dialog.dismiss();
+
                 }).show();
     }
 }
